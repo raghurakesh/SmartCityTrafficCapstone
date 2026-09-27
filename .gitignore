@@ -1,0 +1,13 @@
+# macOS system files
+.DS_Store
+
+# Python environment & cache
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+env/
+*.log
+
+# SQLite database local locks
+*.db-journal
