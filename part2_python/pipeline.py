@@ -225,6 +225,43 @@ def impute_outliers_monthly(df: pd.DataFrame) -> pd.DataFrame:
     imputed_df = imputed_df.drop(columns=["_month"])
     return imputed_df
 
+# Create new columns from date and weather data
+def add_new_features(data: pd.DataFrame) -> pd.DataFrame:
+    df_with_features = data.copy()
+
+    # Extract parts from date and time
+    df_with_features["hour"] = df_with_features["date_time"].dt.hour
+    df_with_features["day_of_week"] = df_with_features["date_time"].dt.dayofweek
+    df_with_features["month"] = df_with_features["date_time"].dt.month
+
+    # Check for the day, if it is a weekend (5 is Saturday, 6 is Sunday)
+    is_saturday_or_sunday = df_with_features["day_of_week"] >= 5
+    df_with_features["is_weekend"] = is_saturday_or_sunday.astype(int)
+
+    # Check for peak/rush hour on weekdays (7-9 AM and 4-6 PM)
+    is_weekday = df_with_features["is_weekend"] == 0
+    is_morning_rush = (df_with_features["hour"] >= 7) & (df_with_features["hour"] <= 9)
+    is_evening_rush = (df_with_features["hour"] >= 16) & (df_with_features["hour"] <= 18)
+    
+    is_rush_hour = is_weekday & (is_morning_rush | is_evening_rush)
+    df_with_features["rush_hour"] = is_rush_hour.astype(int)
+
+    # convert temperature from Kelvin to Celsius
+    celsius_temperature = df_with_features["temp"] - 273.15
+    df_with_features["temp_celsius"] = celsius_temperature.round(2)
+
+    # adverse weather check (rain, snow, thunderstorms, mist, fog, haze, squalls)
+    adverse_weather_list = ["Rain", "Snow", "Thunderstorm", "Mist", "Fog", "Haze", "Squall", "Smoke"]
+    df_with_features["is_adverse_weather"] = (
+        df_with_features["weather_main"].isin(adverse_weather_list).astype(int)
+    )
+
+    logger.info(
+        f"Feature engineering completed - added 7 new columns "
+        f"(hour, day_of_week, month, is_weekend, rush_hour, temp_celsius, is_adverse_weather). "
+        f"Total columns : {df_with_features.shape[1]}."
+    )
+    return df_with_features
 
 
 if __name__ == "__main__":
@@ -245,6 +282,13 @@ if __name__ == "__main__":
         
         # Step to detect outliers and impute using monthly medians
         final_df = impute_outliers_monthly(cleaned_df)
+        
+        # Create new features
+        features = add_new_features(final_df)
+    
+        # save the process file to a csv file for verification
+        features.to_csv("part2_python/traffic_features.csv", index=False)
+        logger.info("dataset processed with features has been saved to 'part2_python/traffic_features.csv'.")
     except Exception as err:
         logger.error(f"Loading failed during load: {err}", exc_info=True)
         sys.exit(1)
