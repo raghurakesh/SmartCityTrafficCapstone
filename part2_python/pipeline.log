@@ -1,0 +1,10 @@
+2026-09-29 23:46:28 - INFO - __main__ - CSV loaded successfully from 'Metro_Interstate_Traffic_Volume.csv'. Number of rows and columns: 48204 rows and 9 columns.
+2026-09-29 23:46:28 - INFO - __main__ - Schema validation passed: all 9 expected columns are present.
+2026-09-29 23:46:28 - INFO - __main__ - Date/time validation passed: 0 invalid date stamps detected.
+2026-09-29 23:46:28 - WARNING - __main__ - 17 row(s) dropped as unable to ensure uniqueness of data
+2026-09-29 23:46:28 - INFO - __main__ - Fields with type related to category are standardized ('holiday', 'weather_main', 'weather_description'): whitespace have been removed or stripped and case has been normalised
+2026-09-29 23:46:28 - WARNING - __main__ -  temperature outlier 10 identified row(s) (temp <= 0 k) Imputing values using group-by-group monthly median.
+2026-09-29 23:46:28 - INFO - __main__ - Month 1: Imputed 4 temperature outlier(s) with monthly median of 266.83 K.
+2026-09-29 23:46:28 - INFO - __main__ - Month 2: Imputed 6 temperature outlier(s) with monthly median of 266.51 K.
+2026-09-29 23:46:28 - WARNING - __main__ - Identified 1 rainfall outlier row(s) (> 500 mm/h). Imputing values using group-by-group monthly median.
+2026-09-29 23:46:28 - INFO - __main__ - Month 7: Imputed 1 rainfall outlier(s) with monthly median of 0.00 mm.
