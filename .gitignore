@@ -8,6 +8,15 @@ __pycache__/
 .venv/
 env/
 *.log
+.ipynb_checkpoints/
+
+# IDE & Editor files
+.vscode/
+.idea/
+
+# Office temporary lock files
+~$*
+.~lock.*
 
 # SQLite database local locks
 *.db-journal
