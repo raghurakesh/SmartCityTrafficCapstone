@@ -20,3 +20,7 @@ env/
 
 # SQLite database local locks
 *.db-journal
+
+# MLflow tracking database and run artifacts
+mlruns/
+*.db
