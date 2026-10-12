@@ -24,3 +24,4 @@ env/
 # MLflow tracking database and run artifacts
 mlruns/
 *.db
+!part3_machine_learning/mlflow.db
