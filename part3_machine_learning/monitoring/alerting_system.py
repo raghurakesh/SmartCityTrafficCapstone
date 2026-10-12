@@ -7,9 +7,36 @@ Consolidates drift detection results into an executive health check:
 
 import os
 import sys
+import logging
 import numpy as np
 import pandas as pd
 from datetime import datetime
+
+# Standard logging configuration matching Part 2
+logger = logging.getLogger(__name__)
+
+def setup_logging(level=logging.INFO):
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    log_file = os.path.join(current_dir, "..", "ml_pipeline.log")
+
+    formatter = logging.Formatter(
+        fmt="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
+
+    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler.setFormatter(formatter)
+    console_handler.setLevel(level)
+
+    file_handler = logging.FileHandler(log_file, mode="a")
+    file_handler.setFormatter(formatter)
+    file_handler.setLevel(level)
+
+    root_logger = logging.getLogger()
+    root_logger.setLevel(level)
+    root_logger.handlers.clear()
+    root_logger.addHandler(console_handler)
+    root_logger.addHandler(file_handler)
 
 # Import monitoring baseline and window simulator
 curr_dir = os.path.dirname(os.path.abspath(__file__))
@@ -61,36 +88,33 @@ class ProductionAlertSystem:
         # Overall 6.5 System Status
         system_status = "ALERT / Requires investigation" if len(flags) > 0 else "PASS / Normal"
 
-        print("=" * 86)
-        print(f"  SMART CITY TRAFFIC MLOps ALERT DASHBOARD - {eval_time}")
-        print("=" * 86)
-        print(f"Monitoring Scope : {window_name}")
-        print(f"System State     : [{system_status}]")
-        print("-" * 86)
+        logger.info(f"SMART CITY TRAFFIC MLOps ALERT DASHBOARD - {eval_time}")
+        logger.info(f"Monitoring scope: {window_name}")
+        logger.info(f"System state: [{system_status}]")
 
-        df_display = pd.DataFrame(table_rows)
-        print(df_display.to_string(index=False))
-        print("-" * 86)
+        for row in table_rows:
+            log_row = logger.warning if row["Metric Status"] == "CRITICAL DRIFT" else logger.info
+            log_row(
+                f"{row['Telemetry Entity']} | reference mean: {row['Reference Mean']}, "
+                f"batch mean: {row['Batch Mean']}, KS: {row['KS Statistic']}, "
+                f"p-value: {row['p-value']} -> {row['Metric Status']}"
+            )
 
         if system_status == "PASS / Normal":
-            print("Action Protocol  : [AUTOMATED SIGN-OFF]")
-            print("  - All live features align with baseline training distributions.")
-            print("  - Automated inference served without intervention.")
+            logger.info("Action protocol: [AUTOMATED SIGN-OFF] - all live features align with baseline training distributions.")
         else:
-            print("Action Protocol  : [ESCALATION TRIGGERED]")
-            print(f"  - Tripped Sensors/Signals ({len(flags)}):")
+            logger.warning(f"Action protocol: [ESCALATION TRIGGERED] - {len(flags)} signal(s) tripped:")
             for name, ks, p in flags:
-                print(f"    * {name} -> KS: {ks:.4f}, p: {p:.2e}")
-            print("  - Mitigation Playbook:")
-            print("    1. Route notification to Municipal Operations Engineering channel.")
-            print("    2. Quarantine affected window from continuous automated feedback loop.")
-            print("    3. Trigger automated model retraining on newly acquired weather regime.")
-        print("=" * 86 + "\n")
+                logger.warning(f"  * {name} -> KS: {ks:.4f}, p: {p:.2e}")
+            logger.warning("  Mitigation 1: route notification to Municipal Operations Engineering channel.")
+            logger.warning("  Mitigation 2: quarantine affected window from continuous automated feedback loop.")
+            logger.warning("  Mitigation 3: trigger automated model retraining on newly acquired weather regime.")
 
         return system_status
 
 
 if __name__ == "__main__":
+    setup_logging()
     df_base, _ = load_data_and_model()
     df_win1, df_win2 = simulate_production_windows(df_base)
 
