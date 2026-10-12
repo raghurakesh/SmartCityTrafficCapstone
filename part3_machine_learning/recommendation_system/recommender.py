@@ -11,24 +11,31 @@ import joblib
 import numpy as np
 import pandas as pd
 
-logger = logging.getLogger("traffic_recommender")
+# Standard logging configuration matching Part 2
+logger = logging.getLogger(__name__)
 
-
-def setup_recommender_logging():
-    logger.setLevel(logging.INFO)
-    logger.handlers.clear()
+def setup_logging(level=logging.INFO):
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    log_file = os.path.join(current_dir, "..", "ml_pipeline.log")
 
     formatter = logging.Formatter(
         fmt="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S"
+        datefmt="%Y-%m-%d %H:%M:%S",
     )
 
     console_handler = logging.StreamHandler(sys.stdout)
     console_handler.setFormatter(formatter)
-    console_handler.setLevel(logging.INFO)
+    console_handler.setLevel(level)
 
-    logger.addHandler(console_handler)
-    logger.propagate = False
+    file_handler = logging.FileHandler(log_file, mode="a")
+    file_handler.setFormatter(formatter)
+    file_handler.setLevel(level)
+
+    root_logger = logging.getLogger()
+    root_logger.setLevel(level)
+    root_logger.handlers.clear()
+    root_logger.addHandler(console_handler)
+    root_logger.addHandler(file_handler)
 
 
 class SmartTrafficRecommender:
@@ -210,7 +217,6 @@ class SmartTrafficRecommender:
 
 def run_demo():
     """Runs standard scenario evaluations demonstrating recommender capabilities."""
-    setup_recommender_logging()
     logger.info("Initializing Smart Traffic Recommender Engine Demo...")
     recommender = SmartTrafficRecommender()
 
@@ -244,9 +250,7 @@ def run_demo():
         }
     ]
 
-    print("\n" + "=" * 95)
-    print("SMART CITY TRAFFIC ADVISORY & DEPARTURE RECOMMENDER ENGINE")
-    print("=" * 95)
+    logger.info("SMART CITY TRAFFIC ADVISORY & DEPARTURE RECOMMENDER ENGINE")
 
     for sc in scenarios:
         rec = recommender.recommend_departure(
@@ -258,17 +262,15 @@ def run_demo():
             weather_main=sc["weather"]
         )
 
-        print(f"\n>>> {sc['name']}")
-        print(f"  Intended Departure   : {rec['target_hour']} | Est. Volume: {rec['target_predicted_volume']} | Risk: {rec['target_risk_probability']}")
-        print(f"  Recommended Window   : {rec['recommended_hour']} | Est. Volume: {rec['recommended_volume']} | Risk: {rec['recommended_risk_probability']}")
-        print(f"  Expected Benefit     : {rec['improvement_pct']} volume reduction ({rec['time_shift_hours']}h shift)")
-        print(f"  System Advisory      : {rec['advice']}")
-        if rec["historical_alerts"]:
-            print("  Historical Insights  :")
-            for alert in rec["historical_alerts"]:
-                print(f"    * {alert}")
-        print("-" * 95)
+        logger.info(f"Scenario: {sc['name']}")
+        logger.info(f"  Intended departure: {rec['target_hour']} | Est. volume: {rec['target_predicted_volume']} | Risk: {rec['target_risk_probability']}")
+        logger.info(f"  Recommended window: {rec['recommended_hour']} | Est. volume: {rec['recommended_volume']} | Risk: {rec['recommended_risk_probability']}")
+        logger.info(f"  Expected benefit: {rec['improvement_pct']} volume reduction ({rec['time_shift_hours']}h shift)")
+        logger.info(f"  System advisory: {rec['advice']}")
+        for alert in rec["historical_alerts"]:
+            logger.info(f"  Historical insight: {alert}")
 
 
 if __name__ == "__main__":
+    setup_logging()
     run_demo()
