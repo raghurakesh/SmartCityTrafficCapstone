@@ -6,11 +6,40 @@ Simulates production monitoring checking for:
 """
 
 import os
+import sys
+import logging
 import joblib
 import numpy as np
 import pandas as pd
 from scipy.stats import ks_2samp
 
+# Standard logging configuration matching Part 2
+logger = logging.getLogger(__name__)
+
+
+def setup_logging(level=logging.INFO):
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    log_file = os.path.join(current_dir, "..", "ml_pipeline.log")
+
+    formatter = logging.Formatter(
+        fmt="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
+
+    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler.setFormatter(formatter)
+    console_handler.setLevel(level)
+
+    file_handler = logging.FileHandler(log_file, mode="a")
+    file_handler.setFormatter(formatter)
+    file_handler.setLevel(level)
+
+    root_logger = logging.getLogger()
+    root_logger.setLevel(level)
+    root_logger.handlers.clear()
+    root_logger.addHandler(console_handler)
+    root_logger.addHandler(file_handler)
+    
 def load_data_and_model():
     curr_dir = os.path.dirname(os.path.abspath(__file__))
     project_root = os.path.abspath(os.path.join(curr_dir, "..", ".."))
@@ -50,9 +79,7 @@ def simulate_production_windows(df_base, n_samples=300):
     return df_win1, df_win2
 
 def check_drift(window_name, df_base, df_prod, alpha=0.01):
-    print("\n" + "=" * 82)
-    print(f"MONITORING SIMULATION: {window_name}")
-    print("=" * 82)
+    logger.info(f"Monitoring simulation started: {window_name}")
 
     metrics = [
         ("temp_c", "Feature: Temperature (°C)"),
@@ -67,6 +94,10 @@ def check_drift(window_name, df_base, df_prod, alpha=0.01):
 
         ks_stat, p_val = ks_2samp(base_vals, prod_vals)
         drift_detected = bool(p_val < alpha)
+        if drift_detected:
+            logger.warning(f"{window_name} | {label}: drift detected (KS={ks_stat:.4f}, p={p_val:.2e})")
+        else:
+            logger.info(f"{window_name} | {label}: aligned with baseline (KS={ks_stat:.4f}, p={p_val:.2e})")
 
         records.append({
             "Monitored Entity": label,
@@ -78,11 +109,11 @@ def check_drift(window_name, df_base, df_prod, alpha=0.01):
         })
 
     df_res = pd.DataFrame(records)
-    print(df_res.to_string(index=False))
-    print("-" * 82)
+    logger.info(f"Monitoring simulation completed: {window_name} ({int(df_res['Drift Detected'].str.startswith('YES').sum())} of {len(df_res)} signals drifted)")
     return df_res
 
 if __name__ == "__main__":
+    setup_logging()
     df_base, _ = load_data_and_model()
     df_win1, df_win2 = simulate_production_windows(df_base)
     check_drift("Window 1 (Standard Operations)", df_base, df_win1)
