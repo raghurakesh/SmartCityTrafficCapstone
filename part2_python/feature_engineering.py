@@ -35,7 +35,7 @@ def setup_logging(log_file: str = "part2_python/pipeline.log", level=logging.INF
     console_handler.setLevel(level)
 
     # Handler to write log messages into a physical file on disk (mode 'w' overwrites the file on a fresh run)
-    file_handler = logging.FileHandler(log_file, mode="w")
+    file_handler = logging.FileHandler(log_file, mode="a")
     file_handler.setFormatter(formatter)
     file_handler.setLevel(level)
     

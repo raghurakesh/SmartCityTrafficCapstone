@@ -114,7 +114,7 @@ def handle_weather_filter(df: pd.DataFrame):
 
     if not choice.isdigit() or not (1 <= int(choice) <= len(weather_options)):
         print("\n[!] Invalid weather selection. Returning to main menu.")
-        logger.warning(f"Invalid weather choice entered: '{choice}'.")
+        logger.error(f"Invalid weather choice entered: '{choice}'.")
         return
 
     selected_weather = weather_options[int(choice) - 1]
@@ -162,7 +162,7 @@ def handle_rush_hour_filter(df: pd.DataFrame):
         )
     else:
         print("\n[!] Invalid selection. Returning to main menu.")
-        logger.warning(f"Invalid rush hour choice entered: '{choice}'.")
+        logger.error(f"Invalid rush hour choice entered: '{choice}'.")
 
 def run_cli_app(df: pd.DataFrame):
     # Main interactive loop handling user inputs and dispatching tasks
@@ -191,7 +191,7 @@ def run_cli_app(df: pd.DataFrame):
             
         else:
             print("\n[!] Invalid selection. Please enter a valid number between 1 and 4.")
-            logger.warning(f"Invalid menu input received: '{user_choice}'.")
+            logger.error(f"Invalid menu input received: '{user_choice}'.")
 
 
 if __name__ == "__main__":
