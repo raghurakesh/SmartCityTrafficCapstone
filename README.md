@@ -212,15 +212,18 @@ Results, interpretation and methodology are documented in the reports rather tha
 
 ## Logging Framework
 
-All modules utilize Python's standard logging library configured with dual handlers:
+Every module gets its logger with `logging.getLogger(__name__)`. Handlers are configured only in each script's entry point (a `setup_logging()` function called from `if __name__ == "__main__"`), and write to both the console and a log file.
 
-- **Console (StreamHandler):** Real-time operational feedback.
-- **File (FileHandler):** Persistent records appended to `part2_python/pipeline.log`.
-- **Standard Format:** `%(asctime)s - %(levelname)s - %(name)s - %(message)s`
+| Scripts                                                                               | Log file                                                                   |
+| ------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| `part2_python/*.py`, `part2_python/cli_app/traffic_app.py`                            | `part2_python/pipeline.log` (`pipeline.py` resets it; later stages append) |
+| `part3_machine_learning/*.py`, `recommendation_system/`, `monitoring/`, `deployment/` | `part3_machine_learning/ml_pipeline.log` (local only, not committed)       |
 
-### Log Levels Employed:
+**Format:** `%(asctime)s - %(levelname)s - %(name)s - %(message)s`
 
-- **DEBUG:** Per-feature row-level transformation audits.
-- **INFO:** Module milestones, output file paths, CLI user actions.
-- **WARNING:** Handled user input anomalies.
-- **ERROR:** File load or execution failures with tracebacks.
+### Log levels
+
+- **DEBUG:** fine-grained internal values for troubleshooting, such as the congestion quartile thresholds. Not shown during normal runs.
+- **INFO:** normal milestones: data loaded, a step completed, a file or model saved, a CLI command invoked.
+- **WARNING:** unexpected but recoverable events: rows dropped, values imputed, outliers capped, a monitoring alert triggered.
+- **ERROR:** a failure that stops the pipeline, or invalid user input to the CLI.
