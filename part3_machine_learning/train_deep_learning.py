@@ -4,6 +4,8 @@ End-to-end training and explainability pipeline for sequential traffic modeling 
 """
 
 import os
+import sys
+import logging
 import random
 import numpy as np
 import pandas as pd
@@ -18,6 +20,33 @@ import shap
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 
+# Standard logging configuration matching Part 2
+logger = logging.getLogger(__name__)
+
+
+def setup_logging():
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    log_file = os.path.join(current_dir, "ml_pipeline.log")
+
+    logger.setLevel(logging.INFO)
+    logger.handlers.clear()
+
+    formatter = logging.Formatter(
+        fmt="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S"
+    )
+
+    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler.setFormatter(formatter)
+    console_handler.setLevel(logging.INFO)
+
+    file_handler = logging.FileHandler(log_file, mode="a")
+    file_handler.setFormatter(formatter)
+    file_handler.setLevel(logging.INFO)
+
+    logger.addHandler(console_handler)
+    logger.addHandler(file_handler)
+    logger.propagate = False
 
 def set_seed(seed=42):
     random.seed(seed)
@@ -80,7 +109,7 @@ class TrafficSequenceDataset(Dataset):
 def main():
     set_seed(42)
     device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
-    print(f"Executing Deep Learning Pipeline on Device: {device}")
+    logger.info(f"Executing Deep Learning Pipeline on Device: {device}")
 
     # 1. Load Data
     script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -152,7 +181,7 @@ def main():
     best_val_loss = float("inf")
     patience, patience_cnt = 5, 0
 
-    print("Beginning model training...")
+    logger.info("Beginning model training...")
     for epoch in range(1, 21):
         model.train()
         for x_b, y_b in train_loader:
@@ -176,10 +205,11 @@ def main():
             best_val_loss = val_loss
             patience_cnt = 0
             torch.save({"model_state_dict": model.state_dict(), "best_val_loss": best_val_loss}, best_path)
+            logger.info(f"Saved best model checkpoint to '{best_path}' (val loss: {best_val_loss:.6f})")
         else:
             patience_cnt += 1
             if patience_cnt >= patience:
-                print(f"Early stopping at epoch {epoch}")
+                logger.info(f"Early stopping at epoch {epoch}")
                 break
 
     # 4. CPU Evaluation
@@ -201,10 +231,7 @@ def main():
     rmse = np.sqrt(mean_squared_error(acts, preds))
     r2 = r2_score(acts, preds)
 
-    print("\n--- Final Test Results ---")
-    print(f"MAE  : {mae:.2f} vehicles/hr")
-    print(f"RMSE : {rmse:.2f} vehicles/hr")
-    print(f"R²   : {r2:.4f}")
+    logger.info(f"Final test results -> MAE: {mae:.2f} vehicles/hr, RMSE: {rmse:.2f} vehicles/hr, R2: {r2:.4f}")
 
     # 5. SHAP Global Attribution
     shap_model = ShapLSTMWrapper(eval_model)
@@ -215,9 +242,10 @@ def main():
     global_shap = np.mean(np.abs(shap_vals), axis=(0, 1)).flatten()
 
     df_shap = pd.DataFrame({"Feature": feature_cols, "Mean_SHAP": global_shap}).sort_values("Mean_SHAP", ascending=False)
-    print("\n--- SHAP Feature Attribution Top 5 ---")
-    print(df_shap.head(5).to_string(index=False))
+    top5 = ", ".join(f"{row.Feature}: {row.Mean_SHAP:.4f}" for row in df_shap.head(5).itertuples())
+    logger.info(f"SHAP top 5 feature attributions -> {top5}")
 
 
 if __name__ == "__main__":
+    setup_logging()
     main()
