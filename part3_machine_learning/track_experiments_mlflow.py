@@ -1,4 +1,6 @@
 import os
+import sys
+import logging
 import random
 import numpy as np
 import pandas as pd
@@ -14,7 +16,34 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from torch.utils.data import Dataset, DataLoader
 
+# Standard logging configuration matching Part 2
+logger = logging.getLogger(__name__)
 
+
+def setup_logging():
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    log_file = os.path.join(current_dir, "ml_pipeline.log")
+
+    logger.setLevel(logging.INFO)
+    logger.handlers.clear()
+
+    formatter = logging.Formatter(
+        fmt="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S"
+    )
+
+    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler.setFormatter(formatter)
+    console_handler.setLevel(logging.INFO)
+
+    file_handler = logging.FileHandler(log_file, mode="a")
+    file_handler.setFormatter(formatter)
+    file_handler.setLevel(logging.INFO)
+
+    logger.addHandler(console_handler)
+    logger.addHandler(file_handler)
+    logger.propagate = False
+    
 def set_seed(seed=42):
     random.seed(seed)
     np.random.seed(seed)
@@ -98,6 +127,7 @@ def load_and_preprocess_data():
     return train_df, val_df, test_df, feature_cols, target_col
 
 if __name__ == "__main__":
+    setup_logging()
     set_seed(42)
     script_dir = os.path.dirname(os.path.abspath(__file__))
     db_path = os.path.join(script_dir, "mlflow.db")
@@ -105,7 +135,7 @@ if __name__ == "__main__":
 
     experiment_name = "SmartCity_Traffic_Volume_Forecasting"
     mlflow.set_experiment(experiment_name)
-    print(f"Tracking MLflow experiments at: {db_path}")
+    logger.info(f"Tracking MLflow experiments at: {db_path}")
 
     train_df, val_df, test_df, feature_cols, target_col = load_and_preprocess_data()
 
@@ -122,7 +152,7 @@ if __name__ == "__main__":
     # ==========================================
     # Run 1: Linear Regression (Baseline)
     # ==========================================
-    print("\n[MLflow Run 1] Tracking Baseline Linear Regression...")
+    logger.info("[MLflow Run 1] Tracking Baseline Linear Regression...")
     with mlflow.start_run(run_name="Baseline_Linear_Regression"):
         lr = LinearRegression()
         lr.fit(X_train, y_train)
@@ -145,12 +175,12 @@ if __name__ == "__main__":
 
         # Log Model Artifact
         mlflow.sklearn.log_model(lr, name="model")
-        print(f"Linear Regression logged -> MAE: {lr_mae:.2f}, RMSE: {lr_rmse:.2f}, R²: {lr_r2:.4f}")
+        logger.info(f"Linear Regression logged -> MAE: {lr_mae:.2f}, RMSE: {lr_rmse:.2f}, R²: {lr_r2:.4f}")
         
     # ==========================================
     # Run 2: Random Forest Regressor
     # ==========================================
-    print("\n[MLflow Run 2] Tracking Random Forest Regressor...")
+    logger.info("[MLflow Run 2] Tracking Random Forest Regressor...")
     with mlflow.start_run(run_name="Random_Forest_Regressor"):
         n_estimators = 100
         max_depth = 18
@@ -177,12 +207,12 @@ if __name__ == "__main__":
 
         # Log Model Artifact
         mlflow.sklearn.log_model(rf, name="model")
-        print(f"Random Forest logged -> MAE: {rf_mae:.2f}, RMSE: {rf_rmse:.2f}, R²: {rf_r2:.4f}")
+        logger.info(f"Random Forest logged -> MAE: {rf_mae:.2f}, RMSE: {rf_rmse:.2f}, R²: {rf_r2:.4f}")
         
     # ==========================================
     # Run 3: PyTorch LSTM (Sequential Deep Learning)
     # ==========================================
-    print("\n[MLflow Run 3] Tracking PyTorch 2-Layer LSTM...")
+    logger.info("[MLflow Run 3] Tracking PyTorch 2-Layer LSTM...")
     with mlflow.start_run(run_name="PyTorch_Stacked_LSTM"):
         seq_len = 24
         hidden_dim = 64
@@ -231,6 +261,6 @@ if __name__ == "__main__":
             artifact_path="model",
             input_example=example_input.numpy()
         )
-        print(f"PyTorch LSTM logged -> MAE: {lstm_mae:.2f}, RMSE: {lstm_rmse:.2f}, R²: {lstm_r2:.4f}")
+        logger.info(f"PyTorch LSTM logged -> MAE: {lstm_mae:.2f}, RMSE: {lstm_rmse:.2f}, R²: {lstm_r2:.4f}")
 
-    print("\nAll 3 candidate models logged to MLflow successfully.")
+    logger.info("All 3 candidate models logged to MLflow successfully.")
