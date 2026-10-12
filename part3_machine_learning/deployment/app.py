@@ -4,11 +4,43 @@ FastAPI service serving the champion Random Forest Traffic Volume model.
 """
 
 import os
+import sys
+import logging
 import joblib
 import numpy as np
 import pandas as pd
 from pydantic import BaseModel, Field
 from fastapi import FastAPI, HTTPException
+
+# Standard logging configuration matching Part 2
+logger = logging.getLogger(__name__)
+
+
+def setup_logging(level=logging.INFO):
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    log_file = os.path.join(current_dir, "..", "ml_pipeline.log")
+
+    formatter = logging.Formatter(
+        fmt="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
+
+    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler.setFormatter(formatter)
+    console_handler.setLevel(level)
+
+    file_handler = logging.FileHandler(log_file, mode="a")
+    file_handler.setFormatter(formatter)
+    file_handler.setLevel(level)
+
+    root_logger = logging.getLogger()
+    root_logger.setLevel(level)
+    root_logger.handlers.clear()
+    root_logger.addHandler(console_handler)
+    root_logger.addHandler(file_handler)
+
+
+setup_logging()
 
 app = FastAPI(
     title="Smart City Traffic Volume Prediction API",
@@ -21,10 +53,11 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 model_path = os.path.abspath(os.path.join(current_dir, "..", "models", "best_regression_rf.pkl"))
 
 if not os.path.exists(model_path):
+    logger.error(f"Model file not found at: {model_path}")
     raise FileNotFoundError(f"Model file not found at: {model_path}")
 
 model = joblib.load(model_path)
-
+logger.info(f"Champion model loaded from '{model_path}'")
 
 class TrafficInput(BaseModel):
     hour: int = Field(8, ge=0, le=23, description="Hour of the day (0-23)")
@@ -82,6 +115,10 @@ def predict_traffic(payload: TrafficInput):
             df_input = df_input[model.feature_names_in_]
 
         prediction = float(model.predict(df_input)[0])
+        logger.info(
+            f"Prediction served: hour={payload.hour}, day_of_week={payload.day_of_week}, "
+            f"weather={payload.weather_main}, predicted_volume={prediction:.1f}"
+        )
 
         return {
             "status": "success",
@@ -91,4 +128,5 @@ def predict_traffic(payload: TrafficInput):
             "unit": "vehicles/hour"
         }
     except Exception as e:
+        logger.error(f"Prediction failed: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
