@@ -199,14 +199,18 @@ The Jupyter notebooks in `part3_machine_learning/notebooks/` cover the same work
 
 Results, interpretation and methodology are documented in the reports rather than in this README:
 
-| Topic                                                                   | Location                                                                   |
-| ----------------------------------------------------------------------- | -------------------------------------------------------------------------- |
-| Part 1 analysis (SQL, statistics, probability, dashboard)               | `.md` files in `part1_data_analytics/Task-1/`, `statistics/`, `dashboard/` |
-| Part 2 methodology and findings                                         | `part2_python/Smart City Traffic Analytics Project Report.pdf`             |
-| Part 3 Tasks 1-5 (models, clustering, LSTM + SHAP, MLflow, recommender) | `part3_machine_learning/Part3_Task1-5_Documentation.pdf`                   |
-| Part 3 Task 6 (versioning, tracking, deployment, monitoring, alerting)  | `part3_machine_learning/Part3_Task6_Documentation.pdf`                     |
-| Part 3 Task 7 (bias, fairness, governance, sustainability)              | `part3_machine_learning/responsible_ai_report.pdf`                         |
-| MLflow run logs                                                         | `part3_machine_learning/mlflow_logs/`                                      |
+| Topic                                                                   | Location                                                                                          |
+| ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| Part 1 Task 1: SQL load, yearly trends, holiday temperatures            | `part1_data_analytics/Task-1/Task-1-2.md`, `part1_data_analytics/Task-1/Task1-3.md`               |
+| Part 1 Task 2: descriptive statistics and correlation                   | `part1_data_analytics/statistics/Task-2.md`                                                       |
+| Part 1 Task 3: probability and congestion analysis                      | `part1_data_analytics/statistics/Task-3.md`                                                       |
+| Part 1 Task 4: Power BI dashboard analysis                              | `part1_data_analytics/dashboard/Task-4.md`                                                        |
+| Part 1 Data Analytics Insights Report                                   | "Data Analytics Insights Report" section at the end of `part1_data_analytics/dashboard/Task-4.md` |
+| Part 2 methodology and findings                                         | `part2_python/Smart City Traffic Analytics Project Report.pdf`                                    |
+| Part 3 Tasks 1-5 (models, clustering, LSTM + SHAP, MLflow, recommender) | `part3_machine_learning/Part3_Task1-5_Documentation.pdf`                                          |
+| Part 3 Task 6 (versioning, tracking, deployment, monitoring, alerting)  | `part3_machine_learning/Part3_Task6_Documentation.pdf`                                            |
+| Part 3 Task 7 (bias, fairness, governance, sustainability)              | `part3_machine_learning/responsible_ai_report.pdf`                                                |
+| MLflow run logs                                                         | `part3_machine_learning/mlflow_logs/`                                                             |
 
 ---
 
